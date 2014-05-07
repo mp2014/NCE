@@ -1,0 +1,10 @@
+---
+host_name: tp8
+dns_server: 192.168.5.68
+domain_name: subnet.junper.net
+backup_router: 192.168.71.254
+root_password: $1$hKWBk3fb$AzrueuuQZ5/Xaz1fAgDHF/ # password1
+admin_username: operator
+admin_password: $1$hKWBk3fb$AzrueuuQZ5/Xaz1fAgDHF/ # password1
+management_address_and_prefix: 192.128.69.205/21
+
