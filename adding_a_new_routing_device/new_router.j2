@@ -1,111 +1,72 @@
 groups {
-    node0 {
-        system {
-            host-name {{ node0_settings['hostname'] }};
-            backup-router {{ node0_settings['gateway'] }} destination 0.0.0.0/0;
-        }
-        interfaces {
-            fxp0 {
-                unit 0 {
-                    family inet {
-                        address {{ node0_settings['ip_address'] }};
-                    }
-                }
-            }
-        }
+  re0 {
+    system {
+      host-name {{ re0_settings['hostname'] }};
     }
-    node1 {
-        system {
-            host-name {{ node1_settings['hostname'] }};
-            backup-router {{ node1_settings['gateway'] }} destination 0.0.0.0/0;
+    interfaces {
+      fxp0 {
+        unit0 {
+          family inet {
+            address {{ re0_settings['fxp0_inet'] }};
+          }
         }
-        interfaces {
-            fxp0 {
-                unit 0 {
-                    family inet {
-                        address {{ node1_settings['ip_address'] }};
-                    }
-                }
-            }
-        }
+      }
     }
+  }
+  re1 {
+    system {
+      host-name {{ re1_settings['hostname'] }};
+    }
+    interfaces {
+      fxp0 {
+        unit0 {
+          family inet {
+            address {{ re1_settings['fxp0_inet'] }};
+          }
+        }
+      }
+    }
+  }
 }
-apply-groups "${node}";
-chassis {
-    cluster {
-        control-link-recovery;
-        reth-count {{ reth_count }};
-        redundancy-group 0 {
-            node 0 priority {{ node0_priority }};
-            node 1 priority {{ node1_priority }};
-        }
-        redundancy-group 1 {
-            node 0 priority {{ node0_priority }};
-            node 1 priority {{ node1_priority }};
-            interface-monitor {
-            {%- for reth in reths %}
-                {%- for interface in reths[reth]['interfaces'] %}
-                {{ interface }} weight 255;
-                {%- endfor %}
-            {%- endfor %}
-            }
-        }
+global;
+apply-groups [ re0 re1 ];
+system {
+  domain-name {{ domain_name }};
+  backup-router {{ backup_router }};
+  name-server {
+  {%- for name_server in name_servers %}
+    {{ name_server }};
+  {%- endfor %}
+  }
+  login {
+    user {{ mgmt_username }} {
+      class super-user;
     }
-}
-interfaces {
-    fab0 {
-        fabric-options {
-            member-interfaces {
-                {{ fab0_interface }};
-            }
-        }
+  }
+  services {
+    telnet;
+  }
+  syslog {
+    user * {
+      any emergency;
     }
-    fab1 {
-        fabric-options {
-            member-interfaces {
-                {{ fab1_interface }};
-            }
-        }
+    file messages {
+      any notice;
+      authorization info;
     }
-{%- for reth in reths %}
-    {%- for interface in reths[reth]['interfaces'] %}
-    {{ interface }} {
-        gigether-options {
-            redundant-parent {{ reth }};
-        }
+    file interactive-commands {
+      interactive-commands any;
     }
-    {%- endfor %}
-{%- endfor %}
-{%- for interface in reths %}
-    {{ interface }} {
-        redundant-ether-options {
-            redundancy-group 1;
-        }
-        unit 0 {
-            family inet {
-                address {{ reths[interface]['ip_address'] }};
-            }
-        }
-    }
-{%- endfor %}
+  }
 }
 routing-options {
-    static {
-    {%- for route in routes %}
-        route {{ route }} next-hop {{ routes[route] }};
-    {%- endfor %}
+  static {
+  {%- for route in fxp0_routes %}
+    route {{ route }} {
+      next-hop {{ fxp0_routes[route] }};
+      retain;
+      no-readvertise;
     }
-}
-security {
-    zones {
-    {%- for zone in zones %}
-        security-zone {{ zone }} {
-            interfaces {
-            {%- for interface in zones[zone]['interfaces'] %}
-                {{ interface }};
-            {%- endfor %}
-            }
-        }
-    {%- endfor %}
-    }
+  {%- endfor %}
+  }
 }
