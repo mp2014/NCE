@@ -1,0 +1,72 @@
+groups {
+    re0 {
+        system {
+            host-name {{ re0_settings['hostname'] }};
+        }
+        interfaces {
+            fxp0 {
+                unit0 {
+                    family inet {
+                        address {{ re0_settings['fxp0_inet'] }};
+                    }
+                }
+            }
+        }
+    }
+    re1 {
+        system {
+            host-name {{ re1_settings['hostname'] }};
+        }
+        interfaces {
+            fxp0 {
+                unit0 {
+                    family inet {
+                        address {{ re1_settings['fxp0_inet'] }};
+                    }
+                }
+            }
+        }
+    }
+}
+global;
+apply-groups [ re0 re1 ];
+system {
+    domain-name {{ domain_name }};
+    backup-router {{ backup_router }};
+    name-server {
+    {%- for name_server in name_servers %}
+        {{ name_server }};
+    {%- endfor %}
+    }
+    login {
+        user {{ mgmt_username }} {
+            class super-user;
+        }
+    }
+    services {
+        telnet;
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+}
+routing-options {
+    static {
+    {%- for route in fxp0_routes %}
+        route {{ route }} {
+            next-hop {{ fxp0_routes[route] }};
+            retain;
+            no-readvertise;
+        }
+    {%- endfor %}
+    }
+}

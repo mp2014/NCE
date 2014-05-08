@@ -1,0 +1,17 @@
+---
+name_servers:
+  - 1.2.3.4
+domain_name: englab.juniper.net
+
+re0_settings:
+  hostname: spice-re0
+  fxp0_inet: 192.168.69.155/21
+re1_settings:
+  hostname: spice-re1
+  fxp0_inet: 192.168.70.72/21
+
+backup_router_inet: 192.168.71.254
+fxp0_routes:
+    '10.10.0.0/12': 192.168.71.254
+
+mgmt_username: admin
