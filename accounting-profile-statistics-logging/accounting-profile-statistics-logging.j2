@@ -1,0 +1,33 @@
+accounting-options {
+    file {{ logfile['name'] }} {
+        size {{ logfile['max_size'] }};
+    }
+    interface-profile {{ accounting_profile_name }} {
+        interval {{ interval }} ;
+        fields {
+            input-bytes;
+            output-bytes;
+            input-errors;
+            output-errors;
+            unsupported-protocol;
+            rpf-check-bytes;
+        }
+    }
+}
+interfaces {
+    {%- for interface in interfaces %}
+    {{ interface['name'] }} {
+    {%- if interface.units %}
+    
+    {%- for unit in interface.units %}
+        unit {{ unit }} {
+            accounting-profile {{ accounting_profile_name }}
+        }
+    {%- endfor %}
+
+    {%- else %}
+        accounting-profile {{ accounting_profile_name }}
+    {%- endif %}
+    }
+    {%- endfor %}
+}
