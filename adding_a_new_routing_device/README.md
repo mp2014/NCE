@@ -3,5 +3,5 @@ http://www.juniper.net/techpubs/en_US/release-independent/nce/information-produc
 
 ### Usage
 ```
-python newrouter.py
+python new_router.py
 ```
