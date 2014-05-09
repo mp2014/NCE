@@ -1,42 +1,17 @@
 ---
-subscriber_profile_name: campus-svlan
-access_profile: mx480-pe
-static_subscriber_group:
-    name: MCU-1
-    auth_domain_name: mx480-pe.com
-    auth_user_prefix: MCU-1
-    interface: ge-1/0/0.600
-nni_interface:
-    name: ge-1/0/0
-    mtu: 4096
-    logical-unit: 600
-    vlan_id: 600
-    inet_address: 10.1.1.17/29
-uni_interface:
-    name: ge-1/1/8
-    mtu: 4096
-    logical_unit: 600
-    vlan_id: 600
-    inet_address: 10.8.1.45/30
-lo_interface:
-    name: lo0
-    logical_unit: 185
-    inet_address: 10.1.1.185/32
-radius_server: 10.11.11.253
-radius_secret: "$9$TQnCtpBREyCAvWx7Vb"
-routing_instance:
-    name: smallCo
-    dhcp_server_group: HDVC-DC-Serv-1
-    dhcp_server_group_server: 10.12.12.100
-    dhcp_relay_group: HDVC
+name_servers:
+  - 1.2.3.4
+domain_name: englab.juniper.net
 
-core_interfaces:
-    - xe-4/1/0
-    - xe-4/2/0
-access_interfaces:
-    - ge-1/2/0
-diameter_realm: solutions.juniper.net
-diameter_peer_name: SOL-SRC
-diameter_peer_ip: 10.70.70.254
-diamater_origin_host: mx-edge-960
-diameter_network_element: DNE-1
+re0_settings:
+  hostname: spice-re0
+  fxp0_inet: 192.168.69.155/21
+re1_settings:
+  hostname: spice-re1
+  fxp0_inet: 192.168.70.72/21
+
+backup_router_inet: 192.168.71.254
+fxp0_routes:
+    '10.10.0.0/12': 192.168.71.254
+
+mgmt_username: admin
