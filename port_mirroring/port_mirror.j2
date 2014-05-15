@@ -4,7 +4,8 @@
 
 ethernet-switching-options {
     analyzer multi-session {
-        input {
+      input {
+        ingress {
 {%- for iface in mirror_ports %}
             interface {{ iface }}.0;
 {%- endfor %}
@@ -14,9 +15,10 @@ ethernet-switching-options {
             interface {{ iface }}.0;
 {%- endfor %}
         }
-        output {
-            interface {{ mirror_cable.from }}.0;
-        }
+      }
+      output {
+        interface {{ mirror_cable.from }}.0;
+      }
     }
 }
 
@@ -80,6 +82,9 @@ vlans {
     {{ mirror_vlan.name }} {
         vlan-id {{ mirror_vlan.vlan_id }};
         no-mac-learning;
+    }
+    {{ mirror_ports_vlan.name }} {
+        vlan-id {{ mirror_ports_vlan.vlan_id }};
     }
 }
 
