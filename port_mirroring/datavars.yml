@@ -1,5 +1,5 @@
 ---
-mirror_ports:
+host_ports:
     - ge-0/0/1
     - ge-0/0/2
     - ge-0/0/3
@@ -11,7 +11,7 @@ mirror_ports:
     - ge-0/0/9
     - ge-0/0/10
 
-mirror_ports_vlan:
+host_ports_vlan:
     name: v11
     vlan_id: 11
 
