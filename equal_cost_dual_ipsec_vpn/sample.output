@@ -1,0 +1,163 @@
+security {
+    ipsec {
+        vpn-monitor-options {
+            interval 5;
+            threshold 5;
+        }
+        policy std {
+            proposal-set standard;
+        }
+    }
+}
+security {
+    ike {
+        policy preShared {
+            mode main;
+            proposal-set standard;
+            pre-shared-key ascii-text "change_this_key";
+        }
+        policy preShared_2 {
+            mode main;
+            proposal-set standard;
+            pre-shared-key ascii-text "change_this_key";
+        }
+        gateway DCA_1 {
+            ike-policy preShared;
+            address 4.4.4.2;
+            external-interface ge-0/0/4.0;
+        }
+        gateway DCA_2 {
+            ike-policy preShared_2;
+            address 5.5.5.2;
+            external-interface ge-0/0/5.0;
+        }
+    }
+    ipsec {
+        vpn DCA_1 {
+            bind-interface st0.0;
+            vpn-monitor {
+                optimized;
+            }
+            ike {
+                gateway DCA_1;
+                no-anti-replay;
+                proxy-identity {
+                    local 0.0.0.0/0;
+                    remote 0.0.0.0/0;
+                    service any;
+                }
+                ipsec-policy std;
+            }
+            establish-tunnels immediately;
+        }
+        vpn DCA_2 {
+            bind-interface st0.1;
+            vpn-monitor {
+                optimized;
+            }
+            ike {
+                gateway DCA_2;
+                no-anti-replay;
+                proxy-identity {
+                    local 0.0.0.0/0;
+                    remote 0.0.0.0/0;
+                    service any;
+                }
+                ipsec-policy std;
+            }
+            establish-tunnels immediately;
+        }
+    }
+    zones {
+        functional-zone management {
+            interfaces {
+                ge-0/0/2.0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+        security-zone trust {
+            address-book {
+                address 0.0.0.0/0 0.0.0.0/0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    any-service;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+        security-zone untrust {
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                lo0.0;
+                ge-0/0/1.0;
+                ge-0/0/4.0;
+                ge-0/0/5.0;
+            }
+        }
+        security-zone VPN {
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                st0.0;
+                st0.1;
+            }
+        }
+    }
+}
+interfaces {
+    st0 {
+        unit 0 {
+            multipoint;
+            family inet {
+                mtu 1500;
+                address 10.255.1.5/24;
+            }
+        }
+        unit 1 {
+            multipoint;
+            family inet {
+                mtu 1500;
+                address 10.255.2.5/24;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 10.204.115.254;
+        route 172.16.0.0/16 next-hop [10.255.1.254 10.255.2.254];
+    }
+    forwarding-table {
+        export load-balancing-policy;
+    }
+}
+policy-options {
+    policy-statement load-balancing-policy {
+        then {
+            load-balance per-packet;
+        }
+    }
+}
