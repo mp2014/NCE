@@ -1,0 +1,165 @@
+security {
+    ipsec {
+        vpn-monitor-options {
+            interval {{ ipsec_monitor_interval }};
+            threshold {{ ipsec_monitor_threshold }};
+        }
+        policy std {
+            proposal-set standard;
+        }
+    }
+}
+security {
+    ike {
+        policy {{ tunnel_1['ike_policy_name'] }} {
+            mode {{ tunnel_1['mode'] }};
+            proposal-set {{ tunnel_1['proposal_set'] }};
+            pre-shared-key ascii-text "{{ tunnel_1['psk'] }}";
+        }
+        policy {{ tunnel_2['ike_policy_name'] }} {
+            mode {{ tunnel_2['mode'] }};
+            proposal-set {{ tunnel_2['proposal_set'] }};
+            pre-shared-key ascii-text "{{ tunnel_2['psk'] }}";
+        }
+        gateway {{ tunnel_1['gateway_name'] }} {
+            ike-policy {{ tunnel_1['ike_policy_name'] }};
+            address {{ tunnel_1['remote_address'] }};
+            external-interface {{ tunnel_1['external_interface'] }};
+        }
+        gateway {{ tunnel_2['gateway_name'] }} {
+            ike-policy {{ tunnel_2['ike_policy_name'] }};
+            address {{ tunnel_2['remote_address'] }};
+            external-interface {{ tunnel_2['external_interface'] }};
+        }
+    }
+    ipsec {
+        vpn {{ tunnel_1['gateway_name'] }} {
+            bind-interface {{ tunnel_1['local_interface'] }};
+            vpn-monitor {
+                optimized;
+            }
+            ike {
+                gateway {{ tunnel_1['gateway_name'] }};
+                no-anti-replay;
+                proxy-identity {
+                    local 0.0.0.0/0;
+                    remote 0.0.0.0/0;
+                    service any;
+                }
+                ipsec-policy std;
+            }
+            establish-tunnels immediately;
+        }
+        vpn {{ tunnel_2['gateway_name'] }} {
+            bind-interface {{ tunnel_2['local_interface'] }};
+            vpn-monitor {
+                optimized;
+            }
+            ike {
+                gateway {{ tunnel_2['gateway_name'] }};
+                no-anti-replay;
+                proxy-identity {
+                    local 0.0.0.0/0;
+                    remote 0.0.0.0/0;
+                    service any;
+                }
+                ipsec-policy std;
+            }
+            establish-tunnels immediately;
+        }
+    }
+    zones {
+        functional-zone {{ zones.management['name'] }} {
+            interfaces {
+            {%- for interfaces in zones.management['interfaces'] %}
+                {{ interfaces }};
+            {%- endfor %}
+            }
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+        security-zone {{ zones.trust['name'] }} {
+            address-book {
+                address 0.0.0.0/0 0.0.0.0/0;
+            }
+            host-inbound-traffic {
+                system-services {
+                    any-service;
+                }
+                protocols {
+                    all;
+                }
+            }
+        }
+        security-zone {{ zones.untrust['name'] }} {
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+            {%- for interfaces in zones.untrust['interfaces'] %}
+                {{ interfaces }};
+            {%- endfor %}
+            }
+        }
+        security-zone {{ zones.vpn['name'] }} {
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                {{ tunnel_1['local_interface'] }};
+                {{ tunnel_2['local_interface'] }};
+            }
+        }
+    }
+}
+interfaces {
+    st0 {
+        unit 0 {
+            multipoint;
+            family inet {
+                mtu 1500;
+                address {{ tunnel_1['local_interface_address'] }};
+            }
+        }
+        unit 1 {
+            multipoint;
+            family inet {
+                mtu 1500;
+                address {{ tunnel_2['local_interface_address'] }};
+            }
+        }
+    }
+}
+routing-options {
+    static {
+    {%- for route in routes %}
+        route {{ route }} next-hop {{ routes[route]|replace("'","")|replace(",","") }};
+    {%- endfor %}
+    }
+    forwarding-table {
+        export load-balancing-policy;
+    }
+}
+policy-options {
+    policy-statement load-balancing-policy {
+        then {
+            load-balance per-packet;
+        }
+    }
+}
